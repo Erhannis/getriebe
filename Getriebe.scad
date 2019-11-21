@@ -248,6 +248,18 @@ module stirnrad(modul, zahnzahl, breite, bohrung, eingriffswinkel = 20, schraegu
 	}
 }
 
+/*
+[outer_diam, gear_diam, inner_diam, height]
+*/
+function pfeilrad_dims(modul, zahnzahl, breite, bohrung, eingriffswinkel = 20, schraegungswinkel=0, optimiert=true) = let(
+        breite = breite/2,
+        d = modul * zahnzahl,
+        r = d / 2,
+        c = (zahnzahl <3)? 0 : modul/6,
+        df = d - 2 * (modul + c),
+        da = (modul <1)? d + modul * 2.2 : d + modul * 2
+    ) [da,d,df,breite*2];
+
 /*  Pfeilrad; verwendet das Modul "stirnrad"
     modul = Höhe des Zahnkopfes über dem Teilkreis
     zahnzahl = Anzahl der Radzähne
@@ -395,6 +407,23 @@ module hohlrad(modul, zahnzahl, breite, randbreite, eingriffswinkel = 20, schrae
 	echo("Außendurchmesser Hohlrad = ", 2*(ra + randbreite));
 	
 }
+
+/*
+[outer_diam, base_diam, gear_diam, inner_diam, height]
+*/
+function pfeilhohlrad_dims(modul, zahnzahl, breite, randbreite, eingriffswinkel = 20, schraegungswinkel = 0) = let(
+        breite = breite / 2,
+        ha = (zahnzahl >= 20) ? 0.02 * atan((zahnzahl/15)/pi) : 0.6,
+        d = modul * zahnzahl,
+        r = d / 2,
+        alpha_stirn = atan(tan(eingriffswinkel)/cos(schraegungswinkel)),
+        db = d * cos(alpha_stirn),
+        rb = db / 2,
+        c = modul / 6,
+        da = (modul <1)? d + (modul+c) * 2.2 : d + (modul+c) * 2,
+        ra = da / 2,
+        df = d - 2 * modul * ha
+    ) [2*(ra+randbreite),da,d,df,breite*2];
 
 /*  Pfeil-Hohlrad; verwendet das Modul "hohlrad"
     modul = Höhe des Zahnkopfes über dem Teilkegel
