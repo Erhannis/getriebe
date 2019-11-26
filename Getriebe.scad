@@ -101,6 +101,11 @@ module kopiere(vect, zahl, abstand, winkel){
 	}
 }
 
+/*
+[length, height, gear depth, thickness]
+*/
+function zahnstange_dims(modul, laenge, hoehe, breite, eingriffswinkel = 20, schraegungswinkel = 0) = [laenge,breite,modul,hoehe+modul];
+
 /*  Zahnstange
     modul = Höhe des Zahnkopfes über der Wälzgeraden
     laenge = Länge der Zahnstange
@@ -108,40 +113,47 @@ module kopiere(vect, zahl, abstand, winkel){
     breite = Breite eines Zahns
     eingriffswinkel = Eingriffswinkel, Standardwert = 20° gemäß DIN 867. Sollte nicht größer als 45° sein.
     schraegungswinkel = Schrägungswinkel zur Zahnstangen-Querachse; 0° = Geradverzahnung */
-module zahnstange(modul, laenge, hoehe, breite, eingriffswinkel = 20, schraegungswinkel = 0) {
-
-	// Dimensions-Berechnungen
-	modul=modul*(1-spiel);
-	c = modul / 6;												// Kopfspiel
-	mx = modul/cos(schraegungswinkel);							// Durch Schrägungswinkel verzerrtes modul in x-Richtung
-	a = 2*mx*tan(eingriffswinkel)+c*tan(eingriffswinkel);		// Flankenbreite
-	b = pi*mx/2-2*mx*tan(eingriffswinkel);						// Kopfbreite
-	x = breite*tan(schraegungswinkel);							// Verschiebung der Oberseite in x-Richtung durch Schrägungswinkel
-	nz = ceil((laenge+abs(2*x))/(pi*mx));						// Anzahl der Zähne
-	
-	translate([-pi*mx*(nz-1)/2-a-b/2,-modul,0]){
-		intersection(){											// Erzeugt ein Prisma, das in eine Quadergeometrie eingepasst wird
-			kopiere([1,0,0], nz, pi*mx, 0){
-				polyhedron(
-					points=[[0,-c,0], [a,2*modul,0], [a+b,2*modul,0], [2*a+b,-c,0], [pi*mx,-c,0], [pi*mx,modul-hoehe,0], [0,modul-hoehe,0],	// Unterseite
-						[0+x,-c,breite], [a+x,2*modul,breite], [a+b+x,2*modul,breite], [2*a+b+x,-c,breite], [pi*mx+x,-c,breite], [pi*mx+x,modul-hoehe,breite], [0+x,modul-hoehe,breite]],	// Oberseite
-					faces=[[6,5,4,3,2,1,0],						// Unterseite
-						[1,8,7,0],
-						[9,8,1,2],
-						[10,9,2,3],
-						[11,10,3,4],
-						[12,11,4,5],
-						[13,12,5,6],
-						[7,13,6,0],
-						[7,8,9,10,11,12,13],					// Oberseite
-					]
-				);
-			};
-			translate([abs(x),-hoehe+modul-0.5,-0.5]){
-				cube([laenge,hoehe+modul+1,breite+1]);			// Quader, der das Volumen der Zahnstange umfasst
-			}	
-		};
-	};	
+module zahnstange(modul, laenge, hoehe, breite, eingriffswinkel = 20, schraegungswinkel = 0, weird_offset = false, delta=undef) {
+    // Dimensions-Berechnungen
+    modul=modul*(1-spiel);
+    c = modul / 6;												// Kopfspiel
+    mx = modul/cos(schraegungswinkel);							// Durch Schrägungswinkel verzerrtes modul in x-Richtung
+    a = 2*mx*tan(eingriffswinkel)+c*tan(eingriffswinkel);		// Flankenbreite
+    b = pi*mx/2-2*mx*tan(eingriffswinkel);						// Kopfbreite
+    x = breite*tan(schraegungswinkel);							// Verschiebung der Oberseite in x-Richtung durch Schrägungswinkel
+    nz = ceil((laenge+abs(2*x))/(pi*mx));						// Anzahl der Zähne
+    
+    if (delta == undef) {
+        if (weird_offset) {
+            zahnstange(modul, laenge, hoehe, breite, eingriffswinkel, schraegungswinkel, weird_offset, delta=[-pi*mx*(nz-1)/2-a-b/2,-modul,0]);
+        } else {
+            zahnstange(modul, laenge, hoehe, breite, eingriffswinkel, schraegungswinkel, weird_offset, delta=[-x,-modul+hoehe,0]);
+        }
+    } else {
+        translate(delta){
+            intersection(){											// Erzeugt ein Prisma, das in eine Quadergeometrie eingepasst wird
+                kopiere([1,0,0], nz, pi*mx, 0){
+                    polyhedron(
+                        points=[[0,-c,0], [a,2*modul,0], [a+b,2*modul,0], [2*a+b,-c,0], [pi*mx,-c,0], [pi*mx,modul-hoehe,0], [0,modul-hoehe,0],	// Unterseite
+                            [0+x,-c,breite], [a+x,2*modul,breite], [a+b+x,2*modul,breite], [2*a+b+x,-c,breite], [pi*mx+x,-c,breite], [pi*mx+x,modul-hoehe,breite], [0+x,modul-hoehe,breite]],	// Oberseite
+                        faces=[[6,5,4,3,2,1,0],						// Unterseite
+                            [1,8,7,0],
+                            [9,8,1,2],
+                            [10,9,2,3],
+                            [11,10,3,4],
+                            [12,11,4,5],
+                            [13,12,5,6],
+                            [7,13,6,0],
+                            [7,8,9,10,11,12,13],					// Oberseite
+                        ]
+                    );
+                };
+                translate([abs(x),-hoehe+modul-0.5,-0.5]){
+                    cube([laenge,hoehe+modul+1,breite+1]);			// Quader, der das Volumen der Zahnstange umfasst
+                }	
+            };
+        };	
+    }
 }
 
 /*  Stirnrad
@@ -337,7 +349,7 @@ module zahnstange_und_rad (modul, laenge_stange, zahnzahl_rad, hoehe_stange, boh
 
 	abstand = zusammen_gebaut? modul*zahnzahl_rad/2 : modul*zahnzahl_rad;
 
-	zahnstange(modul, laenge_stange, hoehe_stange, breite, eingriffswinkel, -schraegungswinkel);
+	zahnstange(modul, laenge_stange, hoehe_stange, breite, eingriffswinkel, -schraegungswinkel, weird_offset=true);
 	translate([0,abstand,0])
 		rotate(a=360/zahnzahl_rad)
 			stirnrad (modul, zahnzahl_rad, breite, bohrung_rad, eingriffswinkel, schraegungswinkel, optimiert);
