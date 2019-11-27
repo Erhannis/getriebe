@@ -103,9 +103,8 @@ module kopiere(vect, zahl, abstand, winkel){
 
 /*
 [length, height, gear depth, thickness]
-Note that I treat the tolerance (spiele) as though it's full of plastic - greater tolerance means more of the reported size is actually empty space.
 */
-function zahnstange_dims(modul, laenge, hoehe, breite, eingriffswinkel = 20, schraegungswinkel = 0) = [laenge,breite,modul,hoehe+modul];
+function zahnstange_dims(modul, laenge, hoehe, breite, eingriffswinkel = 20, schraegungswinkel = 0) = [laenge,breite,modul*(1-spiel),hoehe+modul*(1-spiel)];
 
 /*  Zahnstange
     modul = Höhe des Zahnkopfes über der Wälzgeraden
